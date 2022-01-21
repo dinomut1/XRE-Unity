@@ -1,11 +1,4 @@
-# The Nexus
-A downtown district in a massive space station. A collaborative universe we can build together.
-
-Watch this space. We're just getting started.
-
-## What is this?
-The development repository for The Nexus project and all related planning and tracking.
-
+# Unity-to-XREngine Exporter
 Built-in export pipeline for Unity to https://github.com/XRFoundation/XREngine
 # Usage
 

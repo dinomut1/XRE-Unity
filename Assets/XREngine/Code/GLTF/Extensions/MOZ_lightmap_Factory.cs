@@ -33,7 +33,7 @@ namespace XREngine.RealityPack
             {
                 return;
             }
-            if(rend.lightmapIndex < 0)
+            if(!rend.gameObject.isStatic || rend.lightmapIndex < 0)
             {
                 return;
             }

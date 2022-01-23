@@ -116,6 +116,7 @@ dist
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 /[Oo]utputs/
+/[Aa]ssets/Ignore/
 /[Aa]ssets/Bakery/
 /[Aa]ssets/[Ee]ditor/x64/[Bb]akery/
 /[Aa]ssets/PanoramaToCubemap/

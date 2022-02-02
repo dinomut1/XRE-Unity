@@ -122,6 +122,7 @@ dist
 /[Aa]ssets/PanoramaToCubemap/
 /[Aa]ssets/VRPanorama/
 /[Aa]ssets/MeshCombiner/
+/[Aa]ssets/MeshBaker/
 /[Aa]ssets/output_images/
 /[Aa]ssets/XREngine/PipelineAssets/
 # ignore Pipeline default settings conf file

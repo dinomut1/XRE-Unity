@@ -94,16 +94,43 @@ namespace XREngine
                     PipelineSettings.lightmapMode = (LightmapMode)EditorGUILayout.EnumPopup("Lightmap Mode", PipelineSettings.lightmapMode);
 
 
+
                     GUILayout.Space(16);
                     if (GUILayout.Button("Save Settings as Default"))
                     {
                         PipelineSettings.SaveSettings();
                     }
                     GUILayout.Space(16);
-                    if (PipelineSettings.XREProjectFolder != null)
+                    if (GUILayout.Button("Serialize Assets"))
+                    {
+                        SerializeMaterials();
+                        CreateUVBakedMeshes();
+                    }
+                    GUILayout.Space(8);
+                    if(GUILayout.Button("Do MeshBake"))
+                    {
+                        CombineMeshes();
+                    }
+                    GUILayout.Space(8);
+                    if(GUILayout.Button("Deserialize Assets"))
+                    {
+                        RestoreGLLinks();
+                        DeserializeMaterials();
+                    }
+                    GUILayout.Space(8);
+                    if (GUILayout.Button("Undo MeshBake"))
+                    {
+                        CleanupMeshCombine();
+                    }
+                    GUILayout.Space(16);
+                    
+                        if (PipelineSettings.XREProjectFolder != null)
                     {
                         doDebug = EditorGUILayout.Toggle("Debug Execution", doDebug);
-                        if (GUILayout.Button("Export"))
+
+                        
+
+                            if (GUILayout.Button("Export"))
                         {
                             state = State.PRE_EXPORT;
                             Export();
@@ -550,19 +577,41 @@ namespace XREngine
             AssetDatabase.Refresh();
         }
 
+        MeshBakeResult[] bakeResults;
         private void CombineMeshes()
         {
-            var stagers = FindObjectsOfType<MeshStager>();
-            foreach(var stager in stagers)
+            var stagers = FindObjectsOfType<MeshBake>();
+            bakeResults = stagers.Select((baker) => baker.Bake()).Where((x) => x != null).ToArray();
+            foreach(var result in bakeResults)
             {
-                stager.Execute(null);
+                foreach(var original in result.originals)
+                {
+                    original.GetComponent<MeshRenderer>().enabled = false;
+                }
             }
             AssetDatabase.Refresh();
         }
 
         private void CleanupMeshCombine()
         {
-            MeshStager.ResetAll();
+            if(bakeResults != null)
+            {
+                foreach (var result in bakeResults)
+                {
+                    foreach(var original in result.originals)
+                    {
+                        if(original && original.GetComponent<MeshRenderer>())
+                            original.GetComponent<MeshRenderer>().enabled = true;
+                    }
+                    foreach(var combined in result.combined)
+                    {
+                        if(combined != null)
+                            DestroyImmediate(combined.gameObject);
+                    }
+                }
+                
+            }
+            //MeshStager.ResetAll();
         }
 
         private void RestoreGLLinks()

@@ -573,8 +573,8 @@ namespace XREngine
                         mesh = filt.sharedMesh;
                 }
                 if (mesh == null) continue;
-
-                bool hasLightmap = renderer.lightmapIndex >= 0 && LightmapSettings.lightmaps.Length > renderer.lightmapIndex;
+                
+                bool hasLightmap = renderer.lightmapIndex >= 0 && LightmapSettings.lightmaps.Length > renderer.lightmapIndex && renderer.gameObject.GetComponent<IgnoreLightmap>() == null;
 
                 if ((hasLightmap && PipelineSettings.lightmapMode == LightmapMode.BAKE_SEPARATE) ||
                      Regex.IsMatch(AssetDatabase.GetAssetPath(mesh), @".*\.glb"))

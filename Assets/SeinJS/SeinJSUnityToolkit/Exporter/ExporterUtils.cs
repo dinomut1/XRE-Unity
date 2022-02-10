@@ -423,7 +423,7 @@ namespace SeinJS
             var material = new GLTF.Schema.Material();
             material.Name = mat.name;
             material.DoubleSided = true;
-            bool hasLightmap = renderer != null && renderer.lightmapIndex >= 0 && LightmapSettings.lightmaps.Length > renderer.lightmapIndex;
+            bool hasLightmap = renderer != null && renderer.lightmapIndex >= 0 && LightmapSettings.lightmaps.Length > renderer.lightmapIndex && renderer.gameObject.GetComponent<IgnoreLightmap>() == null;
 
             bool isMetal = mat.GetInt("workflow") == 0;
             bool isUnlit = mat.GetInt("unlit") == 1;

@@ -410,7 +410,7 @@ namespace SeinJS
             RenderTexture.active = finalTex;
             result.ReadPixels(new Rect(0, 0, result.width, result.height), 0, 0);
             result.Apply();
-            //AssetDatabase.CreateAsset(result, "Assets/Debug/result.asset");
+
             RenderTexture.active = _rt;
 
             inTriMap.Release();
@@ -423,7 +423,7 @@ namespace SeinJS
             var material = new GLTF.Schema.Material();
             material.Name = mat.name;
             material.DoubleSided = true;
-            bool hasLightmap = renderer != null && renderer.lightmapIndex >= 0;
+            bool hasLightmap = renderer != null && renderer.lightmapIndex >= 0 && LightmapSettings.lightmaps.Length > renderer.lightmapIndex;
 
             bool isMetal = mat.GetInt("workflow") == 0;
             bool isUnlit = mat.GetInt("unlit") == 1;
@@ -442,8 +442,6 @@ namespace SeinJS
                 material.PbrMetallicRoughness = new PbrMetallicRoughness();
             }
             bool hasTransparency = ProcessTransparency(mat, material);
-
-            
 
             if (isUnlit || isMetal)
             {

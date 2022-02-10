@@ -5,6 +5,7 @@ using UnityEngine;
 using DigitalOpus.MB;
 using UnityEditor;
 using DigitalOpus.MB.Core;
+using System;
 #if UNITY_EDITOR
 using DigitalOpus.MB.MBEditor;
 
@@ -27,9 +28,9 @@ namespace XREngine
 
         public Mode mode;
 
-        public MeshBakeResult Bake()
+        public MeshBakeResult Bake(bool savePersistent = false)
         {
-            var targets = new List<GameObject>();
+            var targets = new Dictionary<string, List<GameObject>>();
 
             switch (mode)
             {
@@ -39,11 +40,22 @@ namespace XREngine
                     while(frontier.Count > 0)
                     {
                         var child = frontier.Dequeue();
+                        if (!child.gameObject.activeInHierarchy)
+                            continue;
                         var rend = child.GetComponent<MeshRenderer>(); 
                         if (rend != null)
                         {
-                            targets.Add(child.gameObject);
+                            var mat = rend.sharedMaterial;
+
+                            string rType = mat.GetTag("RenderType", false);
+
+                            if (!targets.ContainsKey(rType))
+                            {
+                                targets[rType] = new List<GameObject>();
+                            }
+                            targets[rType].Add(child.gameObject);
                         }
+
                         var nuChildren = (Enumerable.Range(0, child.childCount).Select((i) =>
                         {
                             return child.GetChild(i);
@@ -58,47 +70,84 @@ namespace XREngine
 
             if(targets.Count > 0)
             {
-                GameObject go = new GameObject("MeshBake-" + gameObject.name);
-                
-                GameObject goChild = new GameObject("child", new[]
+                var allTargets = new List<GameObject>();
+                var allCombined = new List<GameObject>();
+                foreach(var targetKV in targets)
                 {
-                    typeof(MeshRenderer),
-                    typeof(MeshFilter)
-                });
+                    if (targetKV.Key == "Fade") continue;
 
-                goChild.transform.SetParent(go.transform);
+                    var theseTargets = targetKV.Value;
+                    GameObject go = new GameObject("MeshBake-" + targetKV.Key + "-" + gameObject.name);
 
-                var renderer = goChild.GetComponent<MeshRenderer>();
-                var filter = goChild.GetComponent<MeshFilter>();
+                    GameObject goChild = new GameObject("child", new[]
+                    {
+                        typeof(MeshRenderer),
+                        typeof(MeshFilter)
+                    });
 
-                var texBaker = go.AddComponent<MB3_TextureBaker>();
-                var meshBaker = go.AddComponent<MB3_MeshBaker>();
-                texBaker.fixOutOfBoundsUVs = true;
-                texBaker.objsToMesh = targets;
-                
-                meshBaker.objsToMesh = targets;
-                meshBaker.meshCombiner.lightmapOption = MB2_LightmapOptions.preserve_current_lightmapping;
-                string matPath = PipelineSettings.PipelineAssetsFolder.Replace(Application.dataPath, "Assets") + gameObject.name + "_MeshBaker.asset";
+                    goChild.transform.SetParent(go.transform);
 
-                MB3_TextureBakerEditorInternal.CreateCombinedMaterialAssets(texBaker, matPath);
-                texBaker.CreateAtlases(null, true, new MB3_EditorMethods());
-                EditorUtility.ClearProgressBar();
-                if (texBaker.textureBakeResults != null) EditorUtility.SetDirty(texBaker.textureBakeResults);
+                    var renderer = goChild.GetComponent<MeshRenderer>();
+                    var filter = goChild.GetComponent<MeshFilter>();
 
-                meshBaker.textureBakeResults = AssetDatabase.LoadAssetAtPath<MB2_TextureBakeResults>(matPath);
-                meshBaker.meshCombiner.resultSceneObject = go;
-                
-                MB3_MeshBakerEditorInternal.bake(meshBaker);
-                goChild.isStatic = true;
+                    var texBaker = go.AddComponent<MB3_TextureBaker>();
+                    var meshBaker = go.AddComponent<MB3_MeshBaker>();
+                    texBaker.fixOutOfBoundsUVs = true;
 
+                    texBaker.customShaderProperties = GetShaderProps(renderer.sharedMaterial);
+
+                    texBaker.objsToMesh = theseTargets;
+
+                    meshBaker.objsToMesh = theseTargets;
+                    meshBaker.meshCombiner.lightmapOption = PipelineSettings.preserveLightmapping ? 
+                        MB2_LightmapOptions.preserve_current_lightmapping :
+                        MB2_LightmapOptions.copy_UV2_unchanged_to_separate_rects;
+                    
+                   
+                    string pathRoot = savePersistent ? PipelineSettings.PipelinePersistentFolder : PipelineSettings.PipelineAssetsFolder;
+                    string matPath = pathRoot.Replace(Application.dataPath, "Assets") + gameObject.name + "-" + targetKV.Key + "_MeshBaker.asset";
+
+                    MB3_TextureBakerEditorInternal.CreateCombinedMaterialAssets(texBaker, matPath);
+                    texBaker.CreateAtlases(null, true, new MB3_EditorMethods());
+                    EditorUtility.ClearProgressBar();
+                    if (texBaker.textureBakeResults != null) EditorUtility.SetDirty(texBaker.textureBakeResults);
+
+                    meshBaker.textureBakeResults = AssetDatabase.LoadAssetAtPath<MB2_TextureBakeResults>(matPath);
+                    meshBaker.meshCombiner.resultSceneObject = go;
+
+                    MB3_MeshBakerEditorInternal.bake(meshBaker);
+                    goChild.isStatic = true;
+
+                    allTargets.AddRange(theseTargets);
+                    allCombined.Add(go);
+                }
                 return new MeshBakeResult
                 {
-                    originals = targets.ToArray(),
-                    combined = new[] { go }
+                    originals = allTargets.ToArray(),
+                    combined = allCombined.ToArray()
                 };
             }
 
             return null;
+        }
+
+        private List<ShaderTextureProperty> GetShaderProps(Material sharedMaterial)
+        {
+            if (sharedMaterial == null)
+                return new List<ShaderTextureProperty>();
+            List<ShaderTextureProperty> result = new List<ShaderTextureProperty>();
+            result.AddRange(sharedMaterial.GetTexturePropertyNames().Select((name) => new ShaderTextureProperty(name, name == "_BumpMap")));
+            string[] otherProps = new[]
+            {
+                "_Color",
+                "_Metallic",
+                "_Roughness",
+                "_OcclusionStrength",
+                "_ZWrite",
+                "_EmissionColor"
+            };
+            result.AddRange(otherProps.Select((name) => new ShaderTextureProperty(name, false)));
+            return result;
         }
     }
 }

@@ -103,16 +103,22 @@ namespace XREngine
                     GUILayout.Space(16);
                     if (GUILayout.Button("Serialize Assets"))
                     {
-                        SerializeMaterials();
-                        CreateUVBakedMeshes();
+                        SerializeMaterials(true);
+                        CreateUVBakedMeshes(true);
                     }
                     GUILayout.Space(8);
+                    PipelineSettings.preserveLightmapping = EditorGUILayout.ToggleLeft("Preserve Lightmapping", PipelineSettings.preserveLightmapping);
                     if(GUILayout.Button("Do MeshBake"))
                     {
-                        CombineMeshes();
+                        CombineMeshes(true);
                     }
                     GUILayout.Space(8);
-                    if(GUILayout.Button("Deserialize Assets"))
+                    if(GUILayout.Button("Format LODGroups"))
+                    {
+                        LODFormatter.FormatLODs();
+                    }
+                    GUILayout.Space(8);
+                    if (GUILayout.Button("Deserialize Assets"))
                     {
                         RestoreGLLinks();
                         DeserializeMaterials();
@@ -124,16 +130,14 @@ namespace XREngine
                     }
                     GUILayout.Space(16);
                     
-                        if (PipelineSettings.XREProjectFolder != null)
+                    if (PipelineSettings.XREProjectFolder != null)
                     {
                         doDebug = EditorGUILayout.Toggle("Debug Execution", doDebug);
 
-                        
-
-                            if (GUILayout.Button("Export"))
+                        if (GUILayout.Button("Export"))
                         {
                             state = State.PRE_EXPORT;
-                            Export();
+                            Export(false);
                         }
                     }
                     break;
@@ -166,7 +170,7 @@ namespace XREngine
 
         Dictionary<Material, Material> matLinks;
         Dictionary<string, Material> matRegistry;
-        private Material BackupMaterial(Material material, Renderer _renderer)
+        private Material BackupMaterial(Material material, Renderer _renderer, bool savePersistent)
         {
             if (matRegistry == null) matRegistry = new Dictionary<string, Material>();
             
@@ -180,7 +184,8 @@ namespace XREngine
             {
                 UnityEngine.Debug.Log("Creating link Material to glb");
                 Material dupe = new Material(material);
-                string dupePath = PipelineSettings.PipelineAssetsFolder + material.name + "_" + DateTime.Now.Ticks + ".mat";
+                string dupeRoot = savePersistent ? PipelineSettings.PipelinePersistentFolder : PipelineSettings.PipelineAssetsFolder;
+                string dupePath = dupeRoot + material.name + "_" + DateTime.Now.Ticks + ".mat";
                 string dupeDir = Regex.Match(dupePath, @"(.*[\\\/])[\w\.\d\-]+").Value;
                 dupePath = dupePath.Replace(Application.dataPath, "Assets");
                 if(!Directory.Exists(dupeDir))
@@ -306,6 +311,28 @@ namespace XREngine
         }
         #endregion
 
+        #region LIGHTS
+        Light[] bakeLights;
+        public void StageLights()
+        {
+            bakeLights = FindObjectsOfType<Light>().Where((light) => light.gameObject.activeInHierarchy && light.lightmapBakeType == LightmapBakeType.Baked).ToArray();
+
+            foreach (var light in bakeLights)
+            {
+                light.gameObject.SetActive(false);
+            }
+        }
+
+        public void CleanupLights()
+        {
+            foreach(var light in bakeLights)
+            {
+                light.gameObject.SetActive(true);
+            }
+            bakeLights = null;
+        }
+        #endregion
+
         #region SKYBOX
         private void FormatForExportingSkybox()
         {
@@ -323,6 +350,10 @@ namespace XREngine
                     "negz"
                     };
                 string nuPath = Path.Combine(PipelineSettings.XREProjectFolder, "cubemap");
+                if(!Directory.Exists(nuPath))
+                {
+                    Directory.CreateDirectory(nuPath);
+                }
                 SkyBox.Mode outMode = SkyBox.Mode.CUBEMAP;
                 if (skyMat.shader.name == "Skybox/6 Sided")
                 {
@@ -421,7 +452,7 @@ namespace XREngine
                 rend = _rend;
             }
         }
-        private void SerializeMaterials()
+        private void SerializeMaterials(bool savePersistent = false)
         {
             matRegistry = new Dictionary<string, Material>();
             matLinks = new Dictionary<Material, Material>();
@@ -435,7 +466,7 @@ namespace XREngine
             {
                 var mat = mats[i].mat;
                 var rend = mats[i].rend;
-                mats[i].mat = BackupMaterial(mat, rend);
+                mats[i].mat = BackupMaterial(mat, rend, savePersistent);
             }
             AssetDatabase.Refresh();
             var remaps = new List<Tuple<Material, string, string>>();
@@ -509,12 +540,12 @@ namespace XREngine
             texLinks = null;
         }
 
-        private void CreateBakedMeshes()
+        private void CreateBakedMeshes(bool savePersistent)
         {
             if(PipelineSettings.meshMode == MeshExportMode.DEFAULT ||
                PipelineSettings.meshMode == MeshExportMode.COMBINE)
             {
-                CreateUVBakedMeshes();
+                CreateUVBakedMeshes(savePersistent);
                 if(PipelineSettings.meshMode == MeshExportMode.COMBINE)
                 {
                     CombineMeshes();
@@ -523,7 +554,7 @@ namespace XREngine
         }
 
         Dictionary<UnityEngine.Mesh, UnityEngine.Mesh> glLinks;
-        private void CreateUVBakedMeshes()
+        private void CreateUVBakedMeshes(bool savePersistent = false)
         {
             glLinks = new Dictionary<Mesh, Mesh>();
             var renderers = FindObjectsOfType<Renderer>();
@@ -542,17 +573,20 @@ namespace XREngine
                         mesh = filt.sharedMesh;
                 }
                 if (mesh == null) continue;
-                
-                bool hasLightmap = renderer.lightmapIndex >= 0;
+
+                bool hasLightmap = renderer.lightmapIndex >= 0 && LightmapSettings.lightmaps.Length > renderer.lightmapIndex;
 
                 if ((hasLightmap && PipelineSettings.lightmapMode == LightmapMode.BAKE_SEPARATE) ||
                      Regex.IsMatch(AssetDatabase.GetAssetPath(mesh), @".*\.glb"))
                 {
-                    if(!Directory.Exists(PipelineSettings.PipelineAssetsFolder))
+
+                    string assetFolder = savePersistent ? PipelineSettings.PipelinePersistentFolder : PipelineSettings.PipelineAssetsFolder;
+
+                    if(!Directory.Exists(assetFolder))
                     {
-                        Directory.CreateDirectory(PipelineSettings.PipelineAssetsFolder);
+                        Directory.CreateDirectory(assetFolder);
                     }
-                    string nuMeshPath = PipelineSettings.PipelineAssetsFolder.Replace(Application.dataPath, "Assets") + renderer.transform.name + "_" + System.DateTime.Now.Ticks + ".asset";
+                    string nuMeshPath = assetFolder.Replace(Application.dataPath, "Assets") + renderer.transform.name + "_" + System.DateTime.Now.Ticks + ".asset";
                     UnityEngine.Mesh nuMesh = UnityEngine.Object.Instantiate(mesh);
 
                     AssetDatabase.CreateAsset(nuMesh, nuMeshPath);
@@ -578,10 +612,10 @@ namespace XREngine
         }
 
         MeshBakeResult[] bakeResults;
-        private void CombineMeshes()
+        private void CombineMeshes(bool savePersistent = false)
         {
             var stagers = FindObjectsOfType<MeshBake>();
-            bakeResults = stagers.Select((baker) => baker.Bake()).Where((x) => x != null).ToArray();
+            bakeResults = stagers.Select((baker) => baker.Bake(savePersistent)).Where((x) => x != null).ToArray();
             foreach(var result in bakeResults)
             {
                 foreach(var original in result.originals)
@@ -699,11 +733,11 @@ namespace XREngine
 
         #endregion
 
-        private void Export()
+        private void Export(bool savePersistent)
         {
-            EditorCoroutineUtility.StartCoroutine(ExportSequence(), this);
+            EditorCoroutineUtility.StartCoroutine(ExportSequence(savePersistent), this);
         }
-        private IEnumerator ExportSequence()
+        private IEnumerator ExportSequence(bool savePersistent)
         {
             
             DirectoryInfo directory = new DirectoryInfo(PipelineSettings.ConversionFolder);
@@ -744,6 +778,8 @@ namespace XREngine
             //TODO: move most of these export helper functions into the OnExport handlers of the
             //      realitypack classes
 
+            StageLights();
+
             FormatForExportingLODs();
 
             if(PipelineSettings.ExportColliders)
@@ -755,7 +791,7 @@ namespace XREngine
             
             SerializeMaterials();
 
-            CreateBakedMeshes();
+            CreateBakedMeshes(savePersistent);
             
             if (PipelineSettings.ExportSkybox)
             {
@@ -819,6 +855,8 @@ namespace XREngine
             {
                 CleanupExportEnvmap();
             }
+
+            CleanupLights();
 
             //clear generated pipeline assets
             PipelineSettings.ClearPipelineJunk();

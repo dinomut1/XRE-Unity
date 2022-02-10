@@ -40,6 +40,7 @@ namespace XREngine
             public bool ExportSkybox;
             public bool ExportEnvmap;
             public MeshExportMode meshMode;
+            public bool preserveLightmapping;
             public LightmapMode lightmapMode;
             public int CombinedTextureResolution;
             public void Apply()
@@ -52,6 +53,7 @@ namespace XREngine
                 PipelineSettings.ExportEnvmap = ExportEnvmap;
 
                 PipelineSettings.lightmapMode = this.lightmapMode;
+                PipelineSettings.preserveLightmapping = this.preserveLightmapping;
                 PipelineSettings.meshMode = meshMode;
 
                 PipelineSettings.CombinedTextureResolution = this.CombinedTextureResolution;
@@ -68,6 +70,7 @@ namespace XREngine
                 lightmapMode = PipelineSettings.lightmapMode;
                 meshMode = PipelineSettings.meshMode;
 
+                preserveLightmapping = PipelineSettings.preserveLightmapping;
                 CombinedTextureResolution = PipelineSettings.CombinedTextureResolution;
             }
         }
@@ -76,6 +79,7 @@ namespace XREngine
         public static readonly string PipelineFolder = Application.dataPath + "/../Pipeline/";
         public static readonly string configFile = PipelineFolder + "settings.conf";
         public static readonly string PipelineAssetsFolder = Application.dataPath + "/XREngine/PipelineAssets/";
+        public static readonly string PipelinePersistentFolder = Application.dataPath + "/XREngine/PersistentAssets/";
         public static string GLTFName;
         public static string XREProjectFolder;// = Application.dataPath + "/../Outputs/GLB/";
 
@@ -92,6 +96,8 @@ namespace XREngine
         public static bool ExportEnvmap;
 
         public static MeshExportMode meshMode;
+
+        public static bool preserveLightmapping;
 
         public static LightmapMode lightmapMode;
 

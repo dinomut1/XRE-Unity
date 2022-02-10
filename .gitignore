@@ -125,6 +125,7 @@ dist
 /[Aa]ssets/MeshBaker/
 /[Aa]ssets/output_images/
 /[Aa]ssets/XREngine/PipelineAssets/
+/[Aa]ssets/XREngine/PersistentAssets/
 # ignore Pipeline default settings conf file
 /[Pp]ipeline/*.conf
 

@@ -20,13 +20,20 @@ namespace XREngine
 
     public class MeshBake : MonoBehaviour
     {
-
+        public enum Resolution
+        {
+            _512=512,
+            _1024=1024,
+            _2048=2048,
+            _4096=4096
+        }
         public enum Mode
         {
             BAKE_CHILDREN
         }
 
         public Mode mode;
+        public Resolution resolution;
 
         public MeshBakeResult Bake(bool savePersistent = false)
         {
@@ -93,6 +100,8 @@ namespace XREngine
                     var texBaker = go.AddComponent<MB3_TextureBaker>();
                     var meshBaker = go.AddComponent<MB3_MeshBaker>();
                     texBaker.fixOutOfBoundsUVs = true;
+                    texBaker.maxAtlasSize = (int)resolution;
+                    texBaker.maxTilingBakeSize = (int)resolution / 2;
 
                     texBaker.customShaderProperties = GetShaderProps(renderer.sharedMaterial);
 

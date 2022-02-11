@@ -271,7 +271,7 @@ namespace XREngine
             {
                 Directory.CreateDirectory(pRoot);
             }
-            string nuPath = pRoot.Replace(Application.dataPath, "Assets") + nuTex.name + ".png";\
+            string nuPath = pRoot.Replace(Application.dataPath, "Assets") + nuTex.name + ".png";
             File.WriteAllBytes(nuPath, nuTex.EncodeToPNG());
             
             UnityEngine.Debug.Log("Generated texture " + nuTex + " from " + tex);

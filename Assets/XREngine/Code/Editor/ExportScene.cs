@@ -214,7 +214,7 @@ namespace XREngine
             }
             return material;
         }
-        private Tuple<Material, string, string>[] BackupTextures(ref Material mat)
+        private Tuple<Material, string, string>[] BackupTextures(ref Material mat, bool savePersistent)
         {
             //Material mat = _mat;
             /*
@@ -252,7 +252,7 @@ namespace XREngine
                 if (texPath == null || texPath == "" || Regex.IsMatch(texPath, @".*\.glb"))
                 {
                     string nuPath;
-                    Texture2D nuTex = GenerateAsset(tex, out nuPath);
+                    Texture2D nuTex = GenerateAsset(tex, out nuPath, savePersistent);
                     texPaths.Add(new Tuple<Material, string, string>(mat, texture.Item1, nuPath));
                 }
             }
@@ -260,20 +260,19 @@ namespace XREngine
         }
 
         Dictionary<Texture2D, Texture2D> texLinks;
-        private Texture2D GenerateAsset(Texture2D tex, out string path)
+        private Texture2D GenerateAsset(Texture2D tex, out string path, bool savePersistent)
         {
             Texture2D nuTex = new Texture2D(tex.width, tex.height, tex.format, tex.mipmapCount, false);
             nuTex.name = tex.name + "_" + System.DateTime.Now.Ticks;
             Graphics.CopyTexture(tex, nuTex);
             nuTex.Apply();
-            if (!Directory.Exists(PipelineSettings.PipelineAssetsFolder))
+            string pRoot = savePersistent ? PipelineSettings.PipelinePersistentFolder : PipelineSettings.PipelineAssetsFolder;
+            if (!Directory.Exists(pRoot))
             {
-                Directory.CreateDirectory(PipelineSettings.PipelineAssetsFolder);
+                Directory.CreateDirectory(pRoot);
             }
-            string nuPath = PipelineSettings.PipelineAssetsFolder.Replace(Application.dataPath, "Assets") + nuTex.name + ".png";
-            string localPath = nuPath.Replace(Application.dataPath, "Assets");
+            string nuPath = pRoot.Replace(Application.dataPath, "Assets") + nuTex.name + ".png";\
             File.WriteAllBytes(nuPath, nuTex.EncodeToPNG());
-            //AssetDatabase.ImportAsset(localPath);
             
             UnityEngine.Debug.Log("Generated texture " + nuTex + " from " + tex);
             if (texLinks == null)
@@ -473,7 +472,7 @@ namespace XREngine
             for (int i = 0; i < mats.Length; i++)
             {
                 var mat = mats[i].mat;
-                remaps.AddRange(BackupTextures(ref mat));
+                remaps.AddRange(BackupTextures(ref mat, savePersistent));
             }
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

@@ -99,6 +99,7 @@ namespace XREngine
 
                     var texBaker = go.AddComponent<MB3_TextureBaker>();
                     var meshBaker = go.AddComponent<MB3_MeshBaker>();
+                    
                     texBaker.fixOutOfBoundsUVs = true;
                     texBaker.maxAtlasSize = (int)resolution;
                     texBaker.maxTilingBakeSize = (int)resolution / 2;
@@ -111,8 +112,9 @@ namespace XREngine
                     meshBaker.meshCombiner.lightmapOption = PipelineSettings.preserveLightmapping ? 
                         MB2_LightmapOptions.preserve_current_lightmapping :
                         MB2_LightmapOptions.copy_UV2_unchanged_to_separate_rects;
-                    
-                   
+
+                    meshBaker.meshCombiner.doTan = false;
+
                     string pathRoot = savePersistent ? PipelineSettings.PipelinePersistentFolder : PipelineSettings.PipelineAssetsFolder;
                     string matPath = pathRoot.Replace(Application.dataPath, "Assets") + gameObject.name + "-" + targetKV.Key + "_MeshBaker.asset";
 

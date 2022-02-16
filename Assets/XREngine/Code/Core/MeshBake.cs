@@ -84,6 +84,13 @@ namespace XREngine
                     if (targetKV.Key == "Fade") continue;
 
                     var theseTargets = targetKV.Value;
+
+                    var theseMats = theseTargets.SelectMany((target) => target.GetComponent<MeshRenderer>().sharedMaterials).Distinct().ToArray();
+                    foreach(var mat in theseMats)
+                    {
+                        Utilities.GLTFUtilities.BlitPropertiesIntoMaps(mat);
+                    }
+
                     GameObject go = new GameObject("MeshBake-" + targetKV.Key + "-" + gameObject.name);
 
                     GameObject goChild = new GameObject("child", new[]

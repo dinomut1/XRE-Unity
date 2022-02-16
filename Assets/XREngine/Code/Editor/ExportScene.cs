@@ -11,6 +11,7 @@ using System.Diagnostics;
 using XREngine.RealityPack;
 using System.Linq;
 using System;
+using XREngine.Utilities;
 
 namespace XREngine
 {
@@ -37,6 +38,8 @@ namespace XREngine
             window.state = State.INITIAL;
             window.Show();
         }
+
+        Material _targetMat;
 
         Exporter exporter;
 
@@ -70,6 +73,7 @@ namespace XREngine
             ExtensionManager.Init();
         }
 
+        Texture2D targTex, result;
         private void OnGUI()
         {
             #region Initial Menu
@@ -117,6 +121,30 @@ namespace XREngine
                     {
                         LODFormatter.FormatLODs();
                     }
+                    GUILayout.Space(8);
+                    _targetMat = (Material)EditorGUILayout.ObjectField("Target Material", _targetMat, typeof(Material), allowSceneObjects: true);
+                    if(GUILayout.Button("Bake PBR shader properties into maps"))
+                    {
+                        Material _mat = _targetMat;
+                        GLTFUtilities.BlitPropertiesIntoMaps(_mat);
+                        AssetDatabase.SaveAssetIfDirty(_mat);
+                        AssetDatabase.Refresh();
+                    }
+                    GUILayout.Space(8);
+                    targTex = (Texture2D)EditorGUILayout.ObjectField("Target Texture", targTex, typeof(Texture2D), allowSceneObjects: true);
+                    if(GUILayout.Button("Set Import"))
+                    {
+                        GLTFUtilities.SetTextureImporterFormat(targTex, true);
+                        result = GLTFUtilities.GenerateAsset(targTex, true);
+                    }
+                    if(GUILayout.Button("Generate Asset"))
+                    {
+                        GLTFUtilities.SetTextureImporterFormat(targTex, true);
+                        result = GLTFUtilities.BlitPropertyIntoMap(targTex, Color.white);
+                        result = GLTFUtilities.GenerateAsset(result, true);
+                        
+                    }
+                    EditorGUILayout.ObjectField("Result Texture", result, typeof(Texture2D), allowSceneObjects: false);
                     GUILayout.Space(8);
                     if (GUILayout.Button("Deserialize Assets"))
                     {

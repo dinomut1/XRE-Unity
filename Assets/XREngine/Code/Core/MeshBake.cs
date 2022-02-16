@@ -50,7 +50,7 @@ namespace XREngine
                         if (!child.gameObject.activeInHierarchy)
                             continue;
                         var rend = child.GetComponent<MeshRenderer>(); 
-                        if (rend != null)
+                        if (rend != null && rend.enabled)
                         {
                             var mat = rend.sharedMaterial;
 

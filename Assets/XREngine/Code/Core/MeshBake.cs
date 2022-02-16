@@ -89,6 +89,7 @@ namespace XREngine
                     foreach(var mat in theseMats)
                     {
                         Utilities.GLTFUtilities.BlitPropertiesIntoMaps(mat);
+                        AssetDatabase.Refresh();
                     }
 
                     GameObject go = new GameObject("MeshBake-" + targetKV.Key + "-" + gameObject.name);
@@ -155,16 +156,7 @@ namespace XREngine
                 return new List<ShaderTextureProperty>();
             List<ShaderTextureProperty> result = new List<ShaderTextureProperty>();
             result.AddRange(sharedMaterial.GetTexturePropertyNames().Select((name) => new ShaderTextureProperty(name, name == "_BumpMap")));
-            string[] otherProps = new[]
-            {
-                "_Color",
-                "_Metallic",
-                "_Roughness",
-                "_OcclusionStrength",
-                "_ZWrite",
-                "_EmissionColor"
-            };
-            result.AddRange(otherProps.Select((name) => new ShaderTextureProperty(name, false)));
+
             return result;
         }
     }

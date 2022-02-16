@@ -157,7 +157,7 @@ namespace XREngine.Utilities
             _mat.SetTexture("_EmissionMap", nuEmission);
             _mat.SetColor("_EmissionColor", Color.white);
 
-            
+            AssetDatabase.SaveAssetIfDirty(_mat);
 
         }
 

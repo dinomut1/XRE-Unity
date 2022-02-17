@@ -251,7 +251,7 @@ namespace SeinJS
             {
                 cacheId += mat.GetInstanceID();
             }
-            bool hasLightmap = renderer.lightmapIndex >= 0;
+            bool hasLightmap = renderer.lightmapIndex >= 0 && renderer.GetComponent<IgnoreLightmap>() == null;
             if(PipelineSettings.lightmapMode == LightmapMode.BAKE_SEPARATE && hasLightmap)
             {
                 var off = renderer.lightmapScaleOffset;
@@ -264,6 +264,7 @@ namespace SeinJS
             }
 
             var attributes = GenerateAttributes(mesh, hasLightmap);
+
             var targets = new List<Dictionary<string, AccessorId>>();// GenerateMorphTargets(mesh, renderer, m);
             m.Name = mesh.name;
             m.Primitives = new List<MeshPrimitive>();

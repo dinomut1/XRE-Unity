@@ -227,11 +227,22 @@ namespace SeinJS
                 mesh = nuMesh;
             }
             */
+
             var result = entry.SaveMesh(mesh, renderer);
             var id = result.key;
             var needProcessMatrials = result.value;
             var node = entry.tr2node[tr];
             node.Mesh = id;
+
+            bool isInstanced = renderer.GetComponent<InstancedMesh>() != null;
+            if(isInstanced)
+            {
+                if(node.Extensions == null)
+                {
+                    node.Extensions = new Dictionary<string, Extension>();
+                }
+                ExtensionManager.Serialize(ExtensionManager.GetExtensionName(typeof(EXT_mesh_gpu_instancing_Factory)), entry, node.Extensions);
+            }
 
             if (needProcessMatrials)
             {

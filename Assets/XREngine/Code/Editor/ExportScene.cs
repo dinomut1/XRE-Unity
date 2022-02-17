@@ -96,9 +96,7 @@ namespace XREngine
                     PipelineSettings.meshMode = (MeshExportMode)EditorGUILayout.EnumPopup("Mesh Export Options", PipelineSettings.meshMode);
                     GUILayout.Space(8);
                     PipelineSettings.lightmapMode = (LightmapMode)EditorGUILayout.EnumPopup("Lightmap Mode", PipelineSettings.lightmapMode);
-
-
-
+                    
                     GUILayout.Space(16);
                     if (GUILayout.Button("Save Settings as Default"))
                     {
@@ -114,6 +112,8 @@ namespace XREngine
                     PipelineSettings.preserveLightmapping = EditorGUILayout.ToggleLeft("Preserve Lightmapping", PipelineSettings.preserveLightmapping);
                     if(GUILayout.Button("Do MeshBake"))
                     {
+                        SerializeMaterials(true);
+                        CreateUVBakedMeshes(true);
                         CombineMeshes(true);
                     }
                     GUILayout.Space(8);
@@ -121,30 +121,6 @@ namespace XREngine
                     {
                         LODFormatter.FormatLODs();
                     }
-                    GUILayout.Space(8);
-                    _targetMat = (Material)EditorGUILayout.ObjectField("Target Material", _targetMat, typeof(Material), allowSceneObjects: true);
-                    if(GUILayout.Button("Bake PBR shader properties into maps"))
-                    {
-                        Material _mat = _targetMat;
-                        GLTFUtilities.BlitPropertiesIntoMaps(_mat);
-                        AssetDatabase.SaveAssetIfDirty(_mat);
-                        AssetDatabase.Refresh();
-                    }
-                    GUILayout.Space(8);
-                    targTex = (Texture2D)EditorGUILayout.ObjectField("Target Texture", targTex, typeof(Texture2D), allowSceneObjects: true);
-                    if(GUILayout.Button("Set Import"))
-                    {
-                        GLTFUtilities.SetTextureImporterFormat(targTex, true);
-                        result = GLTFUtilities.GenerateAsset(targTex, true);
-                    }
-                    if(GUILayout.Button("Generate Asset"))
-                    {
-                        GLTFUtilities.SetTextureImporterFormat(targTex, true);
-                        result = GLTFUtilities.BlitPropertyIntoMap(targTex, Color.white);
-                        result = GLTFUtilities.GenerateAsset(result, true);
-                        
-                    }
-                    EditorGUILayout.ObjectField("Result Texture", result, typeof(Texture2D), allowSceneObjects: false);
                     GUILayout.Space(8);
                     if (GUILayout.Button("Deserialize Assets"))
                     {
@@ -155,6 +131,8 @@ namespace XREngine
                     if (GUILayout.Button("Undo MeshBake"))
                     {
                         CleanupMeshCombine();
+                        RestoreGLLinks();
+                        DeserializeMaterials();
                     }
                     GUILayout.Space(16);
                     
@@ -321,7 +299,8 @@ namespace XREngine
             {
                 Transform tr = lodGroup.transform;
                 lodRegistry.Add(tr, tr.name);
-                tr.name += "_LODGroup";
+                if(!Regex.IsMatch(tr.name, @".*_LODGroup"))
+                    tr.name += "_LODGroup";
             }
         }
 

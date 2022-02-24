@@ -151,6 +151,8 @@ namespace SeinJS
                 UseTRS = true//isBone
             };
 
+            
+
             //configure XREngine collider schema
             JProperty extras;
 
@@ -544,14 +546,14 @@ namespace SeinJS
             return stride;
         }
 
-        private AccessorId PackAttrToBuffer<DataType>(EntryBufferView bufferView, DataType[] data, int offset, Func<DataType[], int, DataType> getValueByIndex = null)
+        public AccessorId PackAttrToBuffer<DataType>(EntryBufferView bufferView, DataType[] data, int offset, Func<DataType[], int, DataType> getValueByIndex = null)
         {
             var accessor = ExporterUtils.PackToBuffer(bufferView.byteBuffer, data, GLTFComponentType.Float, offset, bufferView.view.ByteStride, getValueByIndex);
 
             return AccessorToId(accessor, bufferView);
         }
 
-        private AccessorId PackAttrToBufferShort<DataType>(EntryBufferView bufferView, DataType[] data, int offset, Func<DataType[], int, DataType> getValueByIndex = null)
+        public AccessorId PackAttrToBufferShort<DataType>(EntryBufferView bufferView, DataType[] data, int offset, Func<DataType[], int, DataType> getValueByIndex = null)
         {
             var accessor = ExporterUtils.PackToBuffer(bufferView.byteBuffer, data, GLTFComponentType.UnsignedShort, offset, bufferView.view.ByteStride, getValueByIndex);
 

@@ -39,6 +39,7 @@ namespace XREngine
             public bool ExportColliders;
             public bool ExportSkybox;
             public bool ExportEnvmap;
+            public bool InstanceMeshes;
             public MeshExportMode meshMode;
             public bool preserveLightmapping;
             public LightmapMode lightmapMode;
@@ -51,6 +52,8 @@ namespace XREngine
                 PipelineSettings.ExportColliders = this.ExportColliders;
                 PipelineSettings.ExportSkybox = this.ExportSkybox;
                 PipelineSettings.ExportEnvmap = ExportEnvmap;
+
+                PipelineSettings.InstanceMeshes = this.InstanceMeshes;
 
                 PipelineSettings.lightmapMode = this.lightmapMode;
                 PipelineSettings.preserveLightmapping = this.preserveLightmapping;
@@ -67,6 +70,8 @@ namespace XREngine
                 ExportSkybox = PipelineSettings.ExportSkybox;
                 ExportEnvmap = PipelineSettings.ExportEnvmap;
                 
+                InstanceMeshes = PipelineSettings.InstanceMeshes;
+
                 lightmapMode = PipelineSettings.lightmapMode;
                 meshMode = PipelineSettings.meshMode;
 
@@ -83,6 +88,8 @@ namespace XREngine
         public static string GLTFName;
         public static string XREProjectFolder;// = Application.dataPath + "/../Outputs/GLB/";
 
+        
+
         public static string XREProjectName => 
             Regex.Match(XREProjectFolder, @"(?<=[\\\/])[\w-_]+(?=[\\\/]*$)").Value;
 
@@ -94,6 +101,7 @@ namespace XREngine
         public static bool ExportColliders;
         public static bool ExportSkybox;
         public static bool ExportEnvmap;
+        public static bool InstanceMeshes;
 
         public static MeshExportMode meshMode;
 

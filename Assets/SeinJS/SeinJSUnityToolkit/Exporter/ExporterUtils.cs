@@ -343,11 +343,6 @@ namespace SeinJS
             
             Graphics.Blit(tex, diffuseR);
 
-            //Texture2D outer = new Texture2D(diffuseR.width, diffuseR.height);
-            //outer.ReadPixels(new Rect(0, 0, outer.width, outer.height), 0, 0);
-            //outer.Apply();
-
-
             RenderTexture lightmapR = new RenderTexture(lightmapTex.width, lightmapTex.height, 0);
 
             RenderTexture.active = lightmapR;
@@ -423,7 +418,7 @@ namespace SeinJS
             var material = new GLTF.Schema.Material();
             material.Name = mat.name;
             material.DoubleSided = true;
-            bool hasLightmap = renderer != null && renderer.lightmapIndex >= 0 && LightmapSettings.lightmaps.Length > renderer.lightmapIndex;
+            bool hasLightmap = renderer != null && renderer.lightmapIndex >= 0 && LightmapSettings.lightmaps.Length > renderer.lightmapIndex && renderer.gameObject.GetComponent<IgnoreLightmap>() == null;
 
             bool isMetal = mat.GetInt("workflow") == 0;
             bool isUnlit = mat.GetInt("unlit") == 1;

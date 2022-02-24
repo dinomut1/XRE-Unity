@@ -139,7 +139,7 @@ namespace SeinJS
 
         private void ExportNode(Transform tr, ExporterEntry entry)
         {
-
+            if (!tr.gameObject.activeInHierarchy) return;
             var id = entry.SaveNode(tr, PipelineSettings.ExportColliders);
 
             var seinNode = tr.GetComponent<SeinNode>();
@@ -178,7 +178,9 @@ namespace SeinJS
 
         private void ExportMesh(Transform tr, ExporterEntry entry)
         {
+            
             var renderer = GetRenderer(tr);
+            
             var mesh = GetMesh(tr);
 
             if (!mesh)
@@ -227,11 +229,22 @@ namespace SeinJS
                 mesh = nuMesh;
             }
             */
+
             var result = entry.SaveMesh(mesh, renderer);
             var id = result.key;
             var needProcessMatrials = result.value;
             var node = entry.tr2node[tr];
             node.Mesh = id;
+
+            bool isInstanced = renderer.GetComponent<InstanceMeshNode>() != null;
+            if(isInstanced)
+            {
+                if(node.Extensions == null)
+                {
+                    node.Extensions = new Dictionary<string, Extension>();
+                }
+                ExtensionManager.Serialize(ExtensionManager.GetExtensionName(typeof(EXT_mesh_gpu_instancing_Factory)), entry, node.Extensions, component:renderer);
+            }
 
             if (needProcessMatrials)
             {

@@ -20,13 +20,20 @@ namespace XREngine
 
     public class MeshBake : MonoBehaviour
     {
-
+        public enum Resolution
+        {
+            _512=512,
+            _1024=1024,
+            _2048=2048,
+            _4096=4096
+        }
         public enum Mode
         {
             BAKE_CHILDREN
         }
 
         public Mode mode;
+        public Resolution resolution;
 
         public MeshBakeResult Bake(bool savePersistent = false)
         {
@@ -43,7 +50,7 @@ namespace XREngine
                         if (!child.gameObject.activeInHierarchy)
                             continue;
                         var rend = child.GetComponent<MeshRenderer>(); 
-                        if (rend != null)
+                        if (rend != null && rend.enabled)
                         {
                             var mat = rend.sharedMaterial;
 
@@ -77,6 +84,14 @@ namespace XREngine
                     if (targetKV.Key == "Fade") continue;
 
                     var theseTargets = targetKV.Value;
+
+                    var theseMats = theseTargets.SelectMany((target) => target.GetComponent<MeshRenderer>().sharedMaterials).Distinct().ToArray();
+                    foreach(var mat in theseMats)
+                    {
+                        Utilities.GLTFUtilities.BlitPropertiesIntoMaps(mat);
+                        AssetDatabase.Refresh();
+                    }
+
                     GameObject go = new GameObject("MeshBake-" + targetKV.Key + "-" + gameObject.name);
 
                     GameObject goChild = new GameObject("child", new[]
@@ -92,7 +107,10 @@ namespace XREngine
 
                     var texBaker = go.AddComponent<MB3_TextureBaker>();
                     var meshBaker = go.AddComponent<MB3_MeshBaker>();
+                    
                     texBaker.fixOutOfBoundsUVs = true;
+                    texBaker.maxAtlasSize = (int)resolution;
+                    texBaker.maxTilingBakeSize = (int)resolution / 2;
 
                     texBaker.customShaderProperties = GetShaderProps(renderer.sharedMaterial);
 
@@ -102,8 +120,9 @@ namespace XREngine
                     meshBaker.meshCombiner.lightmapOption = PipelineSettings.preserveLightmapping ? 
                         MB2_LightmapOptions.preserve_current_lightmapping :
                         MB2_LightmapOptions.copy_UV2_unchanged_to_separate_rects;
-                    
-                   
+
+                    meshBaker.meshCombiner.doTan = false;
+
                     string pathRoot = savePersistent ? PipelineSettings.PipelinePersistentFolder : PipelineSettings.PipelineAssetsFolder;
                     string matPath = pathRoot.Replace(Application.dataPath, "Assets") + gameObject.name + "-" + targetKV.Key + "_MeshBaker.asset";
 
@@ -137,16 +156,7 @@ namespace XREngine
                 return new List<ShaderTextureProperty>();
             List<ShaderTextureProperty> result = new List<ShaderTextureProperty>();
             result.AddRange(sharedMaterial.GetTexturePropertyNames().Select((name) => new ShaderTextureProperty(name, name == "_BumpMap")));
-            string[] otherProps = new[]
-            {
-                "_Color",
-                "_Metallic",
-                "_Roughness",
-                "_OcclusionStrength",
-                "_ZWrite",
-                "_EmissionColor"
-            };
-            result.AddRange(otherProps.Select((name) => new ShaderTextureProperty(name, false)));
+
             return result;
         }
     }

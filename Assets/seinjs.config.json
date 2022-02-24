@@ -1,10 +1,10 @@
 {
-  "exportPath": "..\\Output",
+  "exportPath": "..\\..\\..\\shopping_district_with_arena_store",
   "importPath": ".\\Resources",
   "exporterSettings": {
     "Export": {
-      "folder": "",
-      "name": "",
+      "folder": "C:\\Users\\dinomut\\Documents\\XR\\shopping_district_with_arena_store",
+      "name": "shop_test",
       "splitChunks": false,
       "skybox": false,
       "unlit": false,
